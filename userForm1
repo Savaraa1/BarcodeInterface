@@ -1,0 +1,1088 @@
+
+
+Skip to content
+Using Gmail with screen readers
+Meet
+New meeting
+Join a meeting
+Hangouts
+
+Conversations
+6.96 GB of 15 GB used
+Terms · Privacy · Program Policies
+Last account activity: 3 minutes ago
+Details
+Option Explicit
+
+Dim e As String
+Dim skidTotal As Double
+Dim tubID As String
+Dim strTubWT As String
+Dim lotNr As String
+Dim tubWT As Double
+Dim tubQT As Double
+Dim pointer0 As Integer
+Dim pointer1 As Integer
+Dim pointer2 As Integer
+Dim mmbe_c As Integer
+Dim mmbe_r As Integer
+Dim acc_c As Integer
+Dim counter As Integer
+Dim Ticker As Integer
+Dim flag As Boolean
+Dim i As Integer
+Dim j As Integer
+Dim k As Integer
+Dim tagType As Integer
+Dim currentStep As Integer
+Dim lastTub As String
+Dim usedExisting As Boolean
+Dim fchar As String
+Dim flag0 As Boolean
+Dim combine As Boolean
+Dim overflow As Boolean
+Dim soundPath As String
+Dim endFlag As Boolean
+Dim validateMode As Boolean
+Dim verified As Integer
+Dim validDone As Boolean
+Dim Passwd As String
+Dim nope As Boolean
+Dim cleanExit As Boolean
+Dim criticalFail As Boolean
+
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+    If CloseMode = 0 Then Cancel = True
+End Sub
+
+Public Property Get noData(ByVal flag As Boolean)
+    flag = m_noDataAtEnd
+End Property
+
+Private Sub fail()
+    '****************************************************************************************
+    'Subroutine:  Turns UI to red when a bad scan occurs.
+    '****************************************************************************************
+    sndPlaySound32 soundPath & "fail.wav", &H1
+    frmInputData.BackColor = vbRed
+    Label1.BackColor = vbRed
+    Label2.BackColor = vbRed
+    Label3.BackColor = vbRed
+    lblStatus.BackColor = vbRed
+    lblTicker.BackColor = vbRed
+    Label4.BackColor = vbRed
+    Label5.BackColor = vbRed
+    If Ticker > 90 Then
+        lblTicker.ForeColor = vbWhite
+        lblTicker.BackColor = vbMagenta
+    End If
+End Sub
+
+Private Sub hasData()
+    '****************************************************************************************
+    'Subroutine:  Checks if there is existing data entered into the Input System sheet.
+    'Logic Paths:
+    ' 1. If there is existing data, then clear the forms entirely.
+    '****************************************************************************************
+    flag = False
+    If Worksheets(3).Cells(3, 1) <> "" Then flag = True
+    If flag = True Then
+        Call clearData
+        Call refreshUI
+    End If
+End Sub
+
+Public Sub clearData()
+    Worksheets(1).Range("B7:C45").ClearContents
+    Worksheets(1).Range("E7:F44").ClearContents
+    Worksheets(1).Range("B45:C45").ClearContents
+    Worksheets(1).Range("I7:J45").ClearContents
+    Worksheets(1).Range("L7:M44").ClearContents
+    Worksheets(1).Range("I45:J45").ClearContents
+    Worksheets(1).Cells(8, 16) = ""
+    Worksheets(1).Cells(11, 16) = ""
+    Worksheets(1).Cells(16, 16) = ""
+    Worksheets(1).Cells(9, 20) = ""
+    Worksheets(1).Cells(10, 20) = ""
+    Worksheets(1).Cells(11, 20) = ""
+    Worksheets(1).Cells(13, 22) = ""
+    Worksheets(1).Cells(4, 3) = ""
+    Worksheets(1).Cells(4, 7) = ""
+    Worksheets(1).Cells(4, 11) = ""
+    Worksheets(5).Range("F3").FormulaR1C1 = "=SUM((R[-2]C*R[-1]C)/1000)"
+    Worksheets(2).Range("L20:M21").ClearContents
+    Worksheets(2).Range("L23:M24").ClearContents
+    Worksheets(2).Range("W2:X42").ClearContents
+    Worksheets(2).Range("Y2:Y41").ClearContents
+    Worksheets(2).Range("A2:C41").ClearContents
+    Worksheets(2).Cells(2, 7) = ""
+    Module1.n_UnmarkTub
+    Worksheets(2).Range("G5:I6").FormulaR1C1 = "Percentage of yeild met."
+    j = 3
+    Do
+        Worksheets(3).Cells(j, 1) = ""
+        Worksheets(3).Cells(j, 2) = ""
+        Worksheets(3).Cells(j, 3) = ""
+        Worksheets(3).Cells(j, 4) = ""
+        j = j + 1
+    Loop Until Worksheets(3).Cells(j, 1) = ""
+    j = 30
+    Do
+        Worksheets(4).Cells(j, 1) = ""
+        Worksheets(4).Cells(j, 2) = ""
+        Worksheets(4).Cells(j, 3) = ""
+        Worksheets(4).Cells(j, 4) = ""
+        Worksheets(4).Cells(j, 5) = ""
+        Worksheets(4).Cells(j, 6) = ""
+        Worksheets(4).Cells(j, 7) = ""
+        Worksheets(4).Cells(j, 8) = ""
+        Worksheets(4).Cells(j, 9) = ""
+        Worksheets(4).Cells(j, 10) = ""
+        Worksheets(4).Cells(j, 11) = ""
+        j = j + 1
+    Loop Until Worksheets(4).Cells(j, 1) = ""
+    j = 8
+    Do
+        Worksheets(1).Cells(j, 2) = ""
+        Worksheets(1).Cells(j, 3) = ""
+        j = j + 1
+    Loop Until Worksheets(2).Cells(j, 2) = ""
+    For k = 2 To 41
+        Worksheets(2).Cells(k, 3) = ""
+    Next k
+End Sub
+Private Sub halt()
+    '****************************************************************************************
+    'Subroutine:  In the event that the user rescans an existing tag already in the list, the
+    '           UI becomes yellow with an error message placed in the status message area.
+    '****************************************************************************************
+    If validateMode = True Then
+        'When verification mode is on...
+        'is the cells already green?
+        If Worksheets(3).Cells(k, 1).Interior.Color = RGB(0, 255, 0) Then
+            sndPlaySound32 soundPath & "dupe.wav", &H1
+            Exit Sub
+        End If
+        'mark cell green
+        Worksheets(3).Cells(k, 1).Interior.Color = RGB(0, 255, 0)
+        Worksheets(3).Cells(k, 2).Interior.Color = RGB(0, 255, 0)
+        Worksheets(3).Cells(k, 3).Interior.Color = RGB(0, 255, 0)
+        If combine = True Then
+            Worksheets(3).Cells(k, 4).Interior.Color = RGB(0, 255, 0)
+        End If
+        'increase counter of verified, update UI
+        verified = verified + 1
+        sndPlaySound32 soundPath & "verified.wav", &H1
+        lblTicker.Caption = verified & "/" & Ticker
+        'if the verified count = scanned count, finish the process.
+        If verified = Ticker Then
+            cmdVerify.BackColor = RGB(192, 192, 192)
+            validateMode = False
+            lblTicker.Caption = Ticker
+            Label4.Caption = "Tubs Scanned"
+            sndPlaySound32 soundPath & "finished.wav", &H1
+            validDone = True
+        End If
+        Exit Sub
+    End If
+    frmInputData.BackColor = vbYellow
+    Label1.BackColor = vbYellow
+    Label2.BackColor = vbYellow
+    Label3.BackColor = vbYellow
+    lblStatus.BackColor = vbYellow
+    Label4.BackColor = vbYellow
+    Label5.BackColor = vbYellow
+    lblStatus.Caption = "Tub " & tubID & " already scanned in."
+    lblTicker.BackColor = vbYellow
+    tubID = ""
+    tubWT = 0
+    tubQT = 0
+    If Ticker > 90 Then
+        lblTicker.ForeColor = vbWhite
+        lblTicker.BackColor = vbMagenta
+    End If
+    sndPlaySound32 soundPath & "dupe.wav", &H1
+End Sub
+
+Private Sub refreshUI()
+    '****************************************************************************************
+    'Subroutine:  Resets the UI to default colors of Gray and updates the tubs scanned counter
+    '****************************************************************************************
+    frmInputData.BackColor = RGB(192, 192, 192)
+    Label1.BackColor = RGB(192, 192, 192)
+    Label2.BackColor = RGB(192, 192, 192)
+    Label3.BackColor = RGB(192, 192, 192)
+    lblStatus.BackColor = RGB(192, 192, 192)
+    lblTicker.BackColor = RGB(192, 192, 192)
+    Label4.BackColor = RGB(192, 192, 192)
+    Label5.BackColor = RGB(192, 192, 192)
+    lblStatus.Caption = "Ready"
+    If validateMode = False Then
+        lblTicker.Caption = Ticker
+    Else
+        lblTicker.Caption = verified & "/" & Ticker
+    End If
+    If Ticker > 70 Then
+        Call handleOverflow
+        lblTicker.ForeColor = vbWhite
+        lblTicker.BackColor = vbMagenta
+    End If
+    If lastTub <> "" Then lblStatus.Caption = "Last tub scanned: " & lastTub
+End Sub
+Private Sub tag_UI()
+    '****************************************************************************************
+    'Event Handler:  When user clicks on the Change Tub button, swap the images for the tags
+    '          on the UI to reflect different input types.
+    '****************************************************************************************
+    'tagType1 = WW MFG
+    'tagType2 = Coating Tag
+    If tagType = 1 Then
+        Image1.Visible = True
+        Image2.Visible = False
+        If combine = False Then
+            Label1.Caption = "Net WT"
+            Label2.Caption = "Tag ID"
+            Label3.Caption = "Tub Qty"
+        Else
+            Label1.Caption = "Batch"
+            Label2.Caption = "Net WT"
+            Label3.Caption = "Tag ID"
+            Label5.Caption = "Tub Qty"
+        End If
+    Else
+        Image1.Visible = False
+        Image2.Visible = True
+        If combine = False Then
+            Label1.Caption = "Tag ID"
+            Label2.Caption = "Net WT"
+            Label3.Caption = "Tub Qty"
+        Else
+            Label1.Caption = "Tag ID"
+            Label2.Caption = "Batch"
+            Label3.Caption = "Net WT"
+            Label5.Caption = "Tub Qty"
+        End If
+    End If
+    sndPlaySound32 soundPath & "ready.wav", &H1
+End Sub
+
+Public Sub copyData(ByVal ID As String, ByVal WT As Double, ByVal QT As Double, ByVal lot As String)
+    '****************************************************************************************
+    'Subroutine:  Copy data to the respective sheets after a good scan.
+    '****************************************************************************************
+    'Overflow Protection
+    If Ticker < 70 Then Worksheets(1).Cells(pointer0, acc_c) = ID
+    Worksheets(3).Cells(pointer1, 1) = ID
+    
+    Worksheets(3).Cells(pointer1, 2) = WT
+    If Ticker < 70 Then Worksheets(1).Cells(pointer0, acc_c + 1) = WT
+    
+    Worksheets(3).Cells(pointer1, 3) = QT
+    If Ticker < 40 Then
+        Worksheets(2).Cells(pointer2, 1) = ID
+        Worksheets(2).Cells(pointer2, 2) = WT
+        Worksheets(2).Cells(pointer2, 3) = QT
+    End If
+    '### Consolidated ###
+    If combine = True Then Worksheets(3).Cells(pointer1, 4) = lotNr
+    '###
+    
+    'place data into MMBE sheet
+    '****************************************************************************************
+    '*  This function of the MMBE currently DOES NOT WORK with consolidated runs!!!
+    '****************************************************************************************
+    'Note: The sheet does not currently have overflow protection!
+    If combine = False Then
+        Worksheets(4).Cells(mmbe_r, mmbe_c) = ID & " -"
+        Worksheets(4).Cells(mmbe_r, mmbe_c + 1) = strTubWT
+    End If
+    
+    pointer0 = pointer0 + 1
+    pointer2 = pointer2 + 1
+    'When the location tool reaches the bottom of the accountability sheet, move over to the next area.
+    If pointer0 = 46 Then
+        pointer0 = 7
+        acc_c = acc_c + 2
+    End If
+    pointer1 = pointer1 + 1
+    counter = counter + 1
+    mmbe_r = mmbe_r + 1
+    Ticker = Ticker + 1
+    'When the location tool for MMBE reaches the botton of the page, move over to the next column.
+    'Skipped for Consolidated Runs
+    If combine = False Then
+        If counter = 16 Then
+            counter = 0
+            mmbe_r = 30
+            mmbe_c = mmbe_c + 3
+        End If
+    End If
+End Sub
+
+Private Sub enterData()
+    '****************************************************************************************
+    'Event handler:  When there is successful data entered in and needs to be copied to sheets.
+    'Logic path:
+    ' 1. Call clearFields, which will copy the data entered in the fields to variables
+    ' 2. Validate that the information does not already exist.
+    '    a. Run a loop to traverse the list.
+    '    b. When it runs into a duplicate, call the Halt function, and exit the routine.
+    ' 3. If it does not find anything there, copy the data to the respective areas.
+    ' 4. Make the UI green to indicate a "Good scan", display status message.
+    '****************************************************************************************
+    Call clearFields
+    If validDone = True Then
+        'txtInput.Text = ""
+        sndPlaySound32 soundPath & "unable.wav", &H1
+        e = MsgBox("Container verification has already been performed." & vbNewLine & "Unable to add additonal containers.  To add containers, the process requires to be restarted and all data will be lost.", vbExclamation + vbOKOnly)
+        Exit Sub
+    End If
+    Dim chk As String
+    'validate data existing data, that is not consolidated
+    If combine = False Then
+        If pointer1 > 3 Then
+            For k = 3 To pointer1
+                chk = Worksheets(3).Cells(k, 1)
+                If chk = tubID And Worksheets(3).Cells(k, 2) = tubWT And Worksheets(3).Cells(k, 3) = tubQT Then
+                    Call halt
+                    currentStep = 1
+                    txtField1.BackColor = vbCyan
+                    Exit Sub
+                End If
+            Next k
+        End If
+    Else
+    'validate the tubID being scanned does not share with a lot already in list
+        If pointer1 > 3 Then
+            Dim chkLot As String
+            Dim chkFlag As Boolean
+            For k = 3 To pointer1
+                chkLot = Worksheets(3).Cells(k, 4)
+                chk = Worksheets(3).Cells(k, 1)
+                If chk = tubID And Worksheets(3).Cells(k, 2) = tubWT And Worksheets(3).Cells(k, 3) = tubQT And chkLot = lotNr Then
+                    Call halt
+                    currentStep = 1
+                    txtField1.BackColor = vbCyan
+                    Exit Sub
+                End If
+            Next k
+        End If
+    End If
+    
+    If validateMode = True Then
+        'Discovery of non-associated tub
+        sndPlaySound32 soundPath & "unable.wav", &H1
+        Call fail
+        lblStatus.Caption = tubID & " is not a valid tub assigned."
+        criticalFail = True
+        Exit Sub
+    End If
+    
+    Call copyData(tubID, tubWT, tubQT, lotNr)
+    sndPlaySound32 soundPath & "pass.wav", &H1
+    frmInputData.BackColor = vbGreen
+    Label1.BackColor = vbGreen
+    Label2.BackColor = vbGreen
+    Label3.BackColor = vbGreen
+    lblStatus.BackColor = vbGreen
+    lblTicker.BackColor = vbGreen
+    Label4.BackColor = vbGreen
+    Label5.BackColor = vbGreen
+    lblStatus.Caption = "Last tub scanned: " & tubID & "."
+    lblTicker.Caption = Ticker
+    If Ticker > 90 Then
+        lblTicker.ForeColor = vbWhite
+        lblTicker.BackColor = vbMagenta
+    End If
+    lastTub = tubID
+    tubID = ""
+    tubWT = 0
+    tubQT = 0
+    txtField1.BackColor = vbCyan
+End Sub
+
+Private Sub clearFields()
+    '****************************************************************************************
+    'Event handler:  clears the UI input fields
+    '****************************************************************************************
+    txtField1.Text = ""
+    txtField2.Text = ""
+    txtField3.Text = ""
+    txtField4.Text = ""
+End Sub
+
+Private Sub cmdConsolidate_Click()
+    '****************************************************************************************
+    'Event handler:  Toggles modes for Consolidated Batches
+    'Logic path:
+    ' 1. If the user is currently mid-scan, this function will not operate.
+    ' 2. Once out of process,
+    '****************************************************************************************
+    If validateMode = True Then Exit Sub
+    If validDone = True Then
+        sndPlaySound32 soundPath & "unable.wav", &H1
+        Exit Sub
+    End If
+    'Unable to change when mid-process
+    If currentStep <> 1 Then Exit Sub
+    
+    If combine = False Then
+        If Worksheets(3).Cells(3, 1) <> "" Then
+            'There is data here!
+            sndPlaySound32 soundPath & "unable.wav", &H1
+            e = MsgBox("Process will need to be restarted and all data will be erased." & vbNewLine & "Do you wish to continue?", vbYesNo + vbDefaultButton2 + vbExclamation)
+            If e = vbNo Then Exit Sub
+        End If
+        Call clearData
+        cmdConsolidate.BackColor = vbRed
+        cmdConsolidate.ForeColor = vbWhite
+        Label5.Visible = True
+        txtField4.Visible = True
+        combine = True
+        Call tag_UI
+        sndPlaySound32 soundPath & "ready.wav", &H1
+    Else
+        sndPlaySound32 soundPath & "warning.wav", &H1
+        e = MsgBox("WARNING:  Consolidation scanning is currently in process." & vbNewLine & "By selecting yes, all existing data will be removed and the scanning process will be restarted." & vbNewLine & "Do you wish to continue?", vbYesNo + vbDefaultButton2 + vbExclamation)
+        If e = vbNo Then Exit Sub
+        
+        Call clearData
+        
+        cmdConsolidate.BackColor = RGB(212, 208, 200)
+        cmdConsolidate.ForeColor = vbBlack
+        Label5.Visible = False
+        txtField4.Visible = False
+        combine = False
+        Call tag_UI
+    End If
+End Sub
+
+Private Sub cmdDone_Click()
+    If validateMode = True Then Exit Sub
+    If Worksheets(3).Cells(3, 1) = "" Then
+        'exit program with no data
+        cleanExit = True
+        Call programExit
+    Else
+        If validDone = False Then
+            e = MsgBox("Are you finished entering data?", vbYesNo + vbDefaultButton2 + vbQuestion)
+            If e = vbNo Then Exit Sub
+            e = MsgBox("The containers have not been verified." & vbNewLine & "Verification is required to continue.", vbOKOnly + vbExclamation)
+            Call verify
+            Exit Sub
+        End If
+    End If
+    Call autoEndProg
+End Sub
+
+Private Sub cmdEnter_Click()
+    '****************************************************************************************
+    'Event handler:  Handles data when the Enter button is pressed.
+    'Logic path:
+    ' 1. Call the scanIn routine to determine what data is being recorded
+    ' 2. Clear the input field and move the cursor to that field for the next input.
+    '****************************************************************************************
+    Call isCommand
+    If flag0 = True Then
+        txtInput.Text = ""
+        txtInput.SetFocus
+        If endFlag = True Then
+            Call autoEndProg
+            Exit Sub
+        Else
+            Exit Sub
+        End If
+    End If
+    Call n_scanIn(currentStep)
+    txtInput.Text = ""
+    txtInput.SetFocus
+End Sub
+
+Private Sub cmdSwap_Click()
+    '****************************************************************************************
+    'Event handler:  Determine what the internal tag type variable is set to. After that,
+    '           update the UI to reflect the change thru the tag_UI handler.
+    '****************************************************************************************
+    Call swapTagType
+End Sub
+
+Private Sub autoEndProg()
+    If Worksheets(3).Cells(3, 1) = "" Then
+        Call programExit
+        Exit Sub
+    End If
+    If criticalFail = True Then
+        e = MsgBox("An error occured during the validation process.  This process will need to be restarted.", vbOKOnly)
+        Ticker = 0
+        Call Module1.shutdown
+        Exit Sub
+    End If
+    If combine = False Then
+        Call sortTubs
+    Else
+        Call combineSort
+    End If
+    frmInputData.Hide
+    cleanExit = True
+    frmRunInfo.Show
+End Sub
+
+
+Private Sub cmdVerify_Click()
+    If validateMode = True Then Exit Sub
+    Call verify
+End Sub
+
+Private Sub verify()
+    If validateMode = True Then Exit Sub
+    '****************************************************************************************
+    'Reverify Tubs
+    '****************************************************************************************
+    'Logic path:
+    ' 1.  Prompt user if they are done scanning in tubs.  If so continue.
+    ' 2.  Toggle mode for Verification.
+    Call refreshUI
+    If validDone = True Then
+        e = MsgBox("Continer validation has already been completed.", vbOKOnly)
+        Exit Sub
+    End If
+    
+    If validateMode = False Then
+        'Are there 0 containers scanned?
+        If Ticker = 0 Then
+            sndPlaySound32 soundPath & "unable.wav", &H1
+            e = MsgBox("Cannot verify containers.  No data exists.", vbOKOnly + vbInformation)
+            Exit Sub
+        End If
+        
+        'Have you finished scanning?
+        e = MsgBox("Have all the containers been scanned in?", vbYesNo + vbQuestion + vbDefaultButton2)
+        If e = vbNo Then Exit Sub
+        validateMode = True
+        cmdVerify.BackColor = vbGreen
+        Label4.Caption = "Verified"
+        lblTicker.Caption = verified & "/" & Ticker
+    Else
+        validateMode = False
+        cmdVerify.BackColor = RGB(212, 208, 200)
+        Exit Sub
+    End If
+End Sub
+
+Private Sub UserForm_Initialize()
+    '****************************************************************************************
+    'Initialization of program
+    'Sets values to variables.
+    '****************************************************************************************
+    Passwd = "Hikma1"
+    cleanExit = False
+    nope = False
+    criticalFail = False
+    Call Module1.shields_Down
+    frmInputData.Caption = "BIRI (Barcode Input Recording Interface) System [version 1.10.1.54]"
+    Worksheets(3).Columns(1).Interior.Color = RGB(197, 217, 241)
+    Worksheets(3).Columns(2).Interior.Color = RGB(197, 217, 241)
+    Worksheets(3).Columns(3).Interior.Color = RGB(255, 255, 255)
+    validateMode = False
+    validDone = False
+    frmInputData.Width = 600
+    soundPath = "\\west-ward.org\col\Groups\Exchange\dewayne a\F\snd\"
+    combine = False
+    overflow = False
+    Label5.Visible = False
+    txtField4.Visible = False
+    endFlag = False
+    pointer0 = 7
+    pointer1 = 3
+    pointer2 = 2
+    counter = 0
+    acc_c = 2
+    mmbe_r = 30
+    mmbe_c = 1
+    currentStep = 1
+    Ticker = 0
+    tagType = 2
+    lotNr = ""
+    Image1.Visible = False
+    Image2.Visible = False
+    Worksheets(4).Cells(29, 1).HorizontalAlignment = xlLeft
+    Call tag_UI
+    Call clearData
+    'tagType1 = WW MFG
+    'tagType2 = Coating Tag
+    Call refreshUI
+    sndPlaySound32 soundPath & "ready.wav", &H1
+    lblStatus.Caption = "Ready"
+    txtField1.BackColor = vbCyan
+    txtInput.Locked = False
+    txtInput.SetFocus
+End Sub
+
+Private Sub inspect(ByVal txt As String)
+    flag0 = False
+    Dim epicFail As Boolean
+    epicFail = False
+    
+    For i = 1 To Len(txt)
+        fchar = Mid$(txt, i, 1)
+        'Is the character a dot?
+        If Asc(fchar) = 46 Then
+            'Seen a dot already? Not Possible.
+            If flag0 = True And epicFail = False Then epicFail = True
+            If flag0 = False And epicFail = False Then flag0 = True
+        End If
+    Next i
+    If epicFail = True Then flag0 = False
+End Sub
+
+Private Sub handleOverflow()
+    If overflow = False Then
+        sndPlaySound32 soundPath & "warning.wav", &H1
+        e = MsgBox("Warning: You may continue to scan in additional tubs, but note that you have already exceeeded number of allowed tubs for a particular sheet.  The split calculator will not work beyond 40 tubs.  The main accountability sheet cannot store beyond 90 tubs of information.", vbOKOnly)
+        overflow = True
+    End If
+End Sub
+
+Private Sub programExit()
+    Unload frmRunInfo
+    Unload frmInputData
+    Call Module1.shields_Up
+End Sub
+
+Private Sub sortTubs()
+    'selecting cells
+    Worksheets(3).Range("A2:C999").Sort key1:=Range("C3"), order1:=xlAscending, Header:=xlYes
+    Call useExistingData
+End Sub
+
+Private Sub combineSort()
+    'select cells
+    Worksheets(3).Range("A2:D999").Sort key1:=Range("D3"), order1:=xlAscending, Header:=xlYes
+    
+    'generate consolidated MMBEs
+    Dim startPoint As Integer     'temporary pointer for multi-MMBE
+    Dim currentBatch As String    'temporary register for a batch
+    Dim base As Integer
+    
+    base = 30                     'Initial starting row is 30.
+    mmbe_r = 30
+    mmbe_c = 1
+    counter = 0
+    startPoint = 3
+    currentBatch = Worksheets(3).Cells(3, 4) 'grab first listed batch data
+    Worksheets(4).Cells(29, 1) = "The following containers were received for batch " & currentBatch & ":"
+    Worksheets(4).Cells(29, 1).HorizontalAlignment = xlLeft
+    'traverse thru list
+    Do Until Worksheets(3).Cells(startPoint, 1) = ""
+        'compare batch
+        If Worksheets(3).Cells(startPoint, 4) <> currentBatch Then
+            'not the same!
+            'increase by 47 for next page, reset values
+            currentBatch = Worksheets(3).Cells(startPoint, 4)
+            base = base + 47
+            Worksheets(4).Cells(base - 1, 1) = "The following containers were received for batch " & currentBatch & ":"
+            Worksheets(4).Cells(base - 1, 1).HorizontalAlignment = xlLeft
+            mmbe_r = base
+            mmbe_c = 1
+        End If
+        'write to MMBE sheet
+        
+        Worksheets(4).Cells(mmbe_r, mmbe_c) = Worksheets(3).Cells(startPoint, 1) & " -"
+        Worksheets(4).Cells(mmbe_r, mmbe_c + 1) = Worksheets(3).Cells(startPoint, 2) & "KG"
+        
+        'increase counters
+        mmbe_r = mmbe_r + 1
+        mmbe_c = 1
+        counter = counter + 1
+        
+        If counter = 16 Then
+            mmbe_c = mmbe_c + 3
+            mmbe_r = base
+            counter = 0
+        End If
+        
+        startPoint = startPoint + 1
+    Loop
+    flag = False
+End Sub
+
+Private Sub useExistingData()
+    pointer0 = 7 'location for main accountability
+    pointer1 = 3 'location for input system
+    pointer2 = 2 'location for accountability calculator
+    counter = 0  'counter variable for # of mmbe rows used
+    acc_c = 2    'counter variable for # of accountability rows used
+    mmbe_r = 30
+    mmbe_c = 1
+    Ticker = 0
+    If Worksheets(3).Cells(pointer1, 4) = "" Then flag = False
+    Do Until Worksheets(3).Cells(pointer1, 1) = ""
+        'grab data
+        tubID = Worksheets(3).Cells(pointer1, 1)
+        tubWT = Worksheets(3).Cells(pointer1, 2)
+        If Len(tubWT) = 4 Then
+            strTubWT = tubWT & "0 KG"
+        Else
+            strTubWT = tubWT & " KG"
+        End If
+        tubQT = Worksheets(3).Cells(pointer1, 3)
+        
+        'place on accountability
+        'max limit is on row 45
+        If Ticker < 70 Then
+            If pointer0 = 46 Then
+                acc_c = 5
+                pointer0 = 7
+            End If
+            Worksheets(1).Cells(pointer0, acc_c) = tubID
+            Worksheets(1).Cells(pointer0, acc_c + 1) = tubWT
+        End If
+        'place on split calculator
+        If Ticker < 40 Then
+            Worksheets(2).Cells(pointer2, 1) = tubID
+            Worksheets(2).Cells(pointer2, 2) = tubWT
+            Worksheets(2).Cells(pointer2, 3) = tubQT
+        End If
+        'place on MMBE template
+        If flag = False Then
+            If counter = 16 Then
+                counter = 0
+                mmbe_r = 30
+                mmbe_c = mmbe_c + 3
+            End If
+            Worksheets(4).Cells(mmbe_r, mmbe_c) = tubID & " -"
+            Worksheets(4).Cells(mmbe_r, mmbe_c + 1) = strTubWT
+        End If
+        'increment counters
+        pointer0 = pointer0 + 1
+        pointer1 = pointer1 + 1
+        pointer2 = pointer2 + 1
+        counter = counter + 1
+        mmbe_r = mmbe_r + 1
+        Ticker = Ticker + 1
+    Loop
+    Call refreshUI
+End Sub
+
+Private Sub swapTagType()
+    If currentStep <> 1 Then Exit Sub
+    If tagType = 1 Then
+        tagType = 2
+    Else
+        tagType = 1
+    End If
+    Call tag_UI
+End Sub
+
+Private Sub isCommand()
+    '##########################################################################################
+    'Function determines if the input is a command
+    'User input uses a ~ for a command (char 126)
+    '##########################################################################################
+    'is the first character a ~?
+    flag0 = False
+    If Left$(UCase$(txtInput.Text), 1) = Chr$(126) Then
+        flag0 = True
+    Else
+        Exit Sub
+    End If
+    '##########################################################################################
+    'Get command word
+    Dim cmd As String
+    cmd = Mid$(txtInput.Text, 2, Len(txtInput.Text))
+    '##########################################################################################
+    Select Case UCase$(cmd)
+        Case "SWAP":
+            Call swapTagType
+        Case "DONE"
+            Call verify
+    End Select
+End Sub
+
+Private Sub n_scanIn(ByRef currentStep As Integer)
+Select Case currentStep
+    '########################################################################
+    Case 1:
+        txtField1.Text = UCase$(txtInput.Text)
+        If txtField1.TextLength = 0 Then Exit Sub
+        Select Case tagType
+            Case 1:
+                If combine = True Then
+                    Call request_Batch(txtField1.Text)
+                    If nope = True Then Exit Sub
+                Else
+                    Call request_NetWT_Type1(txtField1.Text)
+                    If nope = True Then Exit Sub
+                End If
+                Call refreshUI
+                txtField1.BackColor = vbWhite
+                txtField2.BackColor = vbCyan
+                currentStep = 2
+                Exit Sub
+            Case 2:
+                Call request_TagID(txtField1.Text)
+                If nope = True Then Exit Sub
+                Call refreshUI
+                txtField1.BackColor = vbWhite
+                txtField2.BackColor = vbCyan
+                currentStep = 2
+                Exit Sub
+        End Select
+    '########################################################################
+    Case 2:
+        txtField2.Text = UCase$(txtInput.Text)
+        If txtField2.TextLength = 0 Then Exit Sub
+        Select Case tagType
+            Case 1:
+                If combine = True Then
+                    Call request_NetWT_Type1(txtField2.Text)
+                    If nope = True Then Exit Sub
+                Else
+                    Call request_TagID(txtField2.Text)
+                    If nope = True Then Exit Sub
+                End If
+                Call refreshUI
+                txtField2.BackColor = vbWhite
+                txtField3.BackColor = vbCyan
+                currentStep = 3
+                Exit Sub
+            Case 2:
+                If combine = True Then
+                    Call request_Batch(txtField2.Text)
+                    If nope = True Then Exit Sub
+                Else
+                    Call request_NetWT_Type2(txtField2.Text)
+                    If nope = True Then Exit Sub
+                End If
+                Call refreshUI
+                txtField2.BackColor = vbWhite
+                txtField3.BackColor = vbCyan
+                currentStep = 3
+                Exit Sub
+        End Select
+    '########################################################################
+    Case 3:
+        txtField3.Text = UCase$(txtInput.Text)
+        If txtField3.TextLength = 0 Then Exit Sub
+        Select Case tagType
+            Case 1:
+                If combine = True Then
+                    Call request_TagID(txtField3.Text)
+                    If nope = True Then Exit Sub
+                    Call refreshUI
+                    txtField3.BackColor = vbWhite
+                    txtField4.BackColor = vbCyan
+                    currentStep = 4
+                    Exit Sub
+                Else
+                    Call request_TubQTY(txtField3.Text)
+                    If nope = True Then Exit Sub
+                    currentStep = 1
+                    txtField3.BackColor = vbWhite
+                    txtField1.BackColor = vbCyan
+                    Call enterData
+                    Exit Sub
+                End If
+            Case 2:
+                If combine = True Then
+                    Call request_NetWT_Type2(txtField3.Text)
+                    If nope = True Then Exit Sub
+                    Call refreshUI
+                    txtField3.BackColor = vbWhite
+                    txtField4.BackColor = vbCyan
+                    currentStep = 4
+                    Exit Sub
+                Else
+                    Call request_TubQTY(txtField3.Text)
+                    If nope = True Then Exit Sub
+                    currentStep = 1
+                    txtField3.BackColor = vbWhite
+                    txtField1.BackColor = vbCyan
+                    Call enterData
+                    Exit Sub
+                End If
+        End Select
+    '########################################################################
+    Case 4:
+        txtField4.Text = UCase$(txtInput.Text)
+        If txtField4.TextLength = 0 Then Exit Sub
+        Call request_TubQTY(txtField4.Text)
+        If nope = True Then Exit Sub
+        currentStep = 1
+        txtField4.BackColor = vbWhite
+        txtField1.BackColor = vbCyan
+        Call enterData
+        Exit Sub
+End Select
+End Sub
+
+Private Sub request_TagID(ByVal str As String)
+    nope = False
+    If Len(str) > 4 Then
+        lblStatus.Caption = "Invalid Tub ID.  Please rescan/re-enter."
+        Call fail
+        nope = True
+        Exit Sub
+    Else
+        tubID = str
+    End If
+End Sub
+
+Private Sub request_Batch(ByVal str As String)
+    nope = False
+    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    'Request Batch
+    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    'Batch datafield length is expected to be AA#####.
+    'If its not 6, then exit routine.
+    If Len(str) <> 6 Then
+        lblStatus.Caption = "Invalid batch data. Please rescan/re-enter."
+        Call fail
+        nope = True
+        Exit Sub
+    End If
+    'Check to see if it has a period in the string. If so, exit routine
+    Call inspect(str)
+    If flag0 = True Then
+        lblStatus.Caption = "Invalid batch data. Please rescan/re-enter."
+        Call fail
+        nope = True
+        Exit Sub
+    End If
+    'If passing, store to variable
+    lotNr = str
+End Sub
+
+Private Sub request_NetWT_Type1(ByRef str As String)
+    nope = False
+    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    'Request Net Weight for Type 1
+    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    'Net weight datafield length is expected to me ##.##
+    If Len(str) > 5 Then
+        lblStatus.Caption = "Invalid weight.  Please rescan/re-enter."
+        Call fail
+        nope = True
+        Exit Sub
+    End If
+    'Does it have a period?  If not, exit routine
+    Call inspect(str)
+    If flag0 = False Then
+        lblStatus.Caption = "Invalid weight.  Please rescan/re-enter."
+        Call fail
+        nope = True
+        Exit Sub
+    End If
+    'Passing
+    tubWT = CDbl(str)
+    'text formatting
+    If Len(str) = 4 Then
+        Dim tStr() As String
+        tStr = Split(str, Chr$(46))
+        If Len(tStr(1)) = 1 Then
+            strTubWT = str & "0 KG"
+        Else
+            strTubWT = str & " KG"
+        End If
+    Else
+        strTubWT = txtField3.Text & " KG"
+    End If
+End Sub
+
+Private Sub request_NetWT_Type2(ByVal str As String)
+    nope = False
+    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    'Request Net Weight for Type 2
+    '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    If Len(str) > 9 Then
+        lblStatus.Caption = "Invalid weight.  Please rescan/re-enter."
+        Call fail
+        nope = True
+        Exit Sub
+    Else
+        Dim strArr() As String
+        strArr = Split(str)
+        If UBound(strArr) = 0 Then
+            lblStatus.Caption = "Invalid weight.  Please rescan/re-enter."
+            Call fail
+            nope = True
+            Exit Sub
+        End If
+        If strArr(1) <> "KG" Then
+            lblStatus.Caption = "Invalid weight.  Please rescan/re-enter."
+            Call fail
+            nope = True
+            Exit Sub
+        End If
+        tubWT = CDbl(strArr(0))
+        strTubWT = str
+    End If
+End Sub
+
+Private Sub request_TubQTY(ByVal str As String)
+    nope = False
+    'QTY Data
+    If Len(str) = 0 Then Exit Sub
+    If Len(str) > 7 Then
+        lblStatus.Caption = "Invalid quantity, rescan."
+        Call fail
+        nope = True
+        Exit Sub
+    Else
+        'is first character not numeric?
+        fchar = Left$(str, 1)
+        If Asc(fchar) < 48 Or Asc(fchar) > 57 Then
+            lblStatus.Caption = "Invalid quantity, rescan."
+            Call fail
+            nope = True
+            Exit Sub
+        End If
+        'is the string at least 7 characters long?
+        If Len(str) > 7 Then
+            lblStatus.Caption = "Invalid quantity, rescan."
+            Call fail
+            nope = True
+            Exit Sub
+        End If
+        'is there a dot?
+        Call inspect(str)
+        If flag0 = False Then
+            lblStatus.Caption = "Invalid quantity, rescan."
+            Call fail
+            nope = True
+            Exit Sub
+        End If
+        'is the 4th char from the right a dot?
+        'handle 111.123
+        If Len(str) = 7 Then
+            fchar = Mid$(str, 4, 1)
+            If Asc(fchar) <> 46 Then
+                lblStatus.Caption = "Invalid quantity, rescan."
+                Call fail
+                nope = True
+                Exit Sub
+            End If
+        End If
+        'handle 11.123
+        If Len(str) = 6 Then
+            fchar = Mid$(str, 3, 1)
+            If Asc(fchar) <> 46 Then
+                lblStatus.Caption = "Invalid quantity, rescan."
+                Call fail
+                nope = True
+                Exit Sub
+                End If
+            End If
+        'handle 1.123
+        If Len(str) = 5 Then
+            fchar = Mid$(str, 2, 1)
+            If Asc(fchar) <> 46 Then
+                lblStatus.Caption = "Invalid quantity, rescan."
+                Call fail
+                nope = True
+                Exit Sub
+            End If
+        End If
+        tubQT = CDbl(str)
+    End If
+End Sub

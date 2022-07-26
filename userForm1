@@ -572,7 +572,7 @@ Private Sub UserForm_Initialize()
     validateMode = False
     validDone = False
     frmInputData.Width = 600
-    soundPath = "\\west-ward.org\col\Groups\Exchange\dewayne a\F\snd\"
+    ' soundPath = URL
     combine = False
     overflow = False
     Label5.Visible = False
